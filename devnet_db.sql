@@ -288,3 +288,44 @@ SELECT * from product WHERE product_id IN(
 SELECT product_id from invoice) ORDER BY price DESC;
 
 
+
+
+
+/* VIEWS */
+/* clients from bucharest */
+SELECT * from client WHERE county = 'Bucuresti';
+CREATE VIEW bucharest_clients AS SELECT * from client WHERE county = 'Bucuresti';
+
+/* current month invoice */
+/* SELECT * from orders WHERE MONTH(order_date) = MONTH(NOW()); */
+SELECT order_id from orders WHERE MONTH(order_date) = 7;
+CREATE VIEW monthly_invoice AS SELECT * from invoice WHERE order_id IN (SELECT order_id from orders WHERE MONTH(order_date) = MONTH(NOW()));
+
+/* latest_five_invoices */
+SELECT order_id from orders ORDER BY order_date DESC LIMIT 3;
+CREATE VIEW latest_five_invoices AS SELECT * from invoice WHERE order_id IN (SELECT order_id from orders ORDER BY order_date DESC) LIMIT 3;
+
+
+select * from client;
+select * from bucharest_clients;
+INSERT INTO bucharest_clients (last_name, first_name, county, phone_number) VALUES
+('Mircea','Maria','Bucuresti','0721115555');
+
+select * from client;
+select * from bucharest_clients;
+
+UPDATE client SET county = "Iasi" WHERE client_id = 1;
+SELECT * from client WHERE client_id = 9;
+DELETE from client WHERE client_id = 9;
+
+select * from client;
+select * from bucharest_clients;
+
+
+/* INDEX AND UNIQUE INDEX */
+CREATE INDEX course_name ON product(product_name);
+CREATE INDEX client_county ON client(county);
+CREATE UNIQUE INDEX unique_number ON client(phone_number);
+DROP INDEX course_name ON product;
+
+
