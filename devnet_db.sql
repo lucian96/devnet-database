@@ -56,8 +56,6 @@ CREATE TABLE invoice(
 );
 
 
-
-
 INSERT INTO provider SET provider_name = 'Cisco';
 INSERT INTO provider SET provider_name = 'Juniper';
 INSERT INTO provider SET provider_name = 'Python Institute';
@@ -105,7 +103,7 @@ INSERT INTO product VALUES
 
 INSERT INTO client (last_name, first_name, county, phone_number) VALUES
 ('Ionescu','Maria','Bucuresti','0721112233'),
-('Costea','Ionut','Bucuresti','0745010203'),
+('Costea','Ionut','Cluj','0745010203'),
 ('Aioanei','Adela','Iasi','0744115501'),
 ('Stefanescu','Mircea','Bucuresti','0731123456'),
 ('Georgescu','Adriana','Bucuresti','0722112311'),
@@ -115,7 +113,7 @@ INSERT INTO client (last_name, first_name, county, phone_number) VALUES
 ('Toma','Alina','Arad','0768919801'),
 ('Ciobotaru','Mircea','Sibiu','0768900123'),
 ('Constantinescu','Amalia','Bucuresti','0311234341'),
-('Manolescu','Ioana','Ploiesti','0720110017'),
+('Manolescu','Ioana','Cluj','0720110017'),
 ('Teodorescu','Maria','Sibiu','0751123321');
 
 
@@ -139,9 +137,13 @@ INSERT INTO orders VALUES
 (null, 2, '2023-12-21'),
 (null, 7, '2022-02-27'),
 (null, 3, '2022-03-03'),
+(null, 3, '2015-03-03'),
 (null, 4, '2022-03-01'),
+(null, 4, '2016-03-01'),
 (null, 2, '2022-02-12');
+select * from orders where month(order_date)=12;
 
+select * from orders where month(order_date)=MONTH(NOW());
 
 
 INSERT INTO invoice (order_id, product_id, quantity) VALUES
@@ -183,6 +185,106 @@ ALTER TABLE providers RENAME TO provider;
 
 ALTER TABLE provider ADD provider_location VARCHAR(20) DEFAULT "Bucharest";
 ALTER TABLE provider DROP provider_location;
+ALTER TABLE provider ADD provider_location VARCHAR(20) DEFAULT "Cluj";
 ALTER TABLE product MODIFY product_name VARCHAR(30) NOT NULL;
 ALTER TABLE provider CHANGE provider_name provider_name VARCHAR(20) NOT NULL;
 ALTER TABLE product ADD CONSTRAINT provider_id FOREIGN KEY (provider_id) REFERENCES provider(provider_id)
+
+
+SELECT * from product WHERE provider_id = 1;
+UPDATE product SET price = price + 0.1 * price WHERE provider_id = 1;
+UPDATE provider SET provider_location = "Dublin" WHERE provider_name = "Python Institute";
+
+
+DELETE from product WHERE provider_name = "PCAT 2";
+DELETE from orders WHERE YEAR(order_date) < 2020;
+
+
+/* SELECTS */
+SELECT * from product WHERE category_id = 2;
+SELECT * from client WHERE last_name LIKE "%escu";
+SELECT * from product ORDER BY price DESC LIMIT 1;
+SELECT * from product ORDER BY price ASC LIMIT 1;
+
+
+
+/* FUNCTIONS */
+SELECT MAX(price) from product;
+SELECT MIN(price) from product;
+SELECT * from product WHERE MONTH(start_date) in (6,7,8);
+SELECT CONCAT(first_name, " ", last_name) as full_name from client;
+SELECT AVG(price) from product;
+select avg(price) from product where category_id=2;
+select round(avg(price),2) from product where category_id=2;
+
+
+
+/* JOINS */
+/* get the client and order details */
+SELECT c.last_name, c.county, c.phone_number, o.order_id
+from client c
+INNER JOIN orders o
+WHERE c.client_id = o.client_id and YEAR(o.order_date) = 2022;
+
+/* get the product and filter based on category_id */
+SELECT cat.category_name, p.product_name
+FROM product as p
+JOIN category as cat
+ON p.category_id = cat.category_id
+WHERE cat.category_id = 2;
+
+/* get the client order and based on it, the invoice */
+SELECT c.last_name, c.county, c.phone_number, o.order_id, o.order_date, i.product_id
+from client c
+JOIN orders o USING(client_id)
+JOIN invoice i USING(order_id);
+
+/* from the invoice, get the product based on the product_id */
+/* from the product, get the category and filter the ones from networking */
+SELECT i.id_prod_order, p.product_name, i.quantity, c.category_name
+from invoice i
+JOIN product p
+ON p.product_id = i.product_id
+JOIN category c
+ON p.category_id = c.category_id WHERE c.category_name = "Networking";
+
+/* from the invoice, get the client and provider from the same county */
+SELECT i.id_prod_order, c.last_name, c.county, p.provider_location from invoice i
+JOIN orders o
+ON i.order_id = o.order_id
+JOIN client c
+ON o.client_id = c.client_id
+JOIN product prod
+ON i.product_id = prod.product_id
+JOIN provider p
+ON prod.provider_id = p.provider_id
+WHERE c.county = "Cluj";
+
+
+
+
+
+/* SUB QUERIES */
+/* most expensive product bought in the current month */
+SELECT product_name, price from product
+WHERE provider_id IN (
+SELECT prod.product_id from orders o
+JOIN invoice i
+USING(order_id)
+JOIN product prod
+USING(product_id) WHERE MONTH(o.order_date) = 7) ORDER BY price DESC LIMIT 1; /* month(now())*/
+
+/* provider of the products ordered in July */
+SELECT provider_name from provider
+WHERE provider_id IN (
+SELECT prod.provider_id from orders o
+JOIN invoice i
+USING(order_id)
+JOIN product prod
+USING(product_id) WHERE YEAR(o.order_date) = 2022);
+
+/* ordered products ordered DESC by price*/
+SELECT * from product WHERE product_id IN(
+SELECT product_id from invoice) ORDER BY price DESC;
+
+
