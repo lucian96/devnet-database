@@ -15,6 +15,7 @@ CREATE TABLE provider(
 );
 
 
+
 CREATE TABLE product(
 	product_id INT(6) PRIMARY KEY AUTO_INCREMENT,
 	product_name VARCHAR(100) NOT NULL,
@@ -24,7 +25,7 @@ CREATE TABLE product(
 	category_id INT(5),
 	provider_id INT(7),
 	CONSTRAINT fk_prod_cat FOREIGN KEY (category_id) REFERENCES category(category_id),
-	FOREIGN KEY (provider_id) REFERENCES provider(provider_id)
+	// FOREIGN KEY (provider_id) REFERENCES provider(provider_id)
 );
 
 
@@ -175,3 +176,13 @@ INSERT INTO invoice (order_id, product_id, quantity) VALUES
 (20, 6, 2),
 (20, 12, 2),
 (21, 11, 1);
+
+
+ALTER TABLE provider RENAME TO providers;
+ALTER TABLE providers RENAME TO provider;
+
+ALTER TABLE provider ADD provider_location VARCHAR(20) DEFAULT "Bucharest";
+ALTER TABLE provider DROP provider_location;
+ALTER TABLE product MODIFY product_name VARCHAR(30) NOT NULL;
+ALTER TABLE provider CHANGE provider_name provider_name VARCHAR(20) NOT NULL;
+ALTER TABLE product ADD CONSTRAINT provider_id FOREIGN KEY (provider_id) REFERENCES provider(provider_id)
